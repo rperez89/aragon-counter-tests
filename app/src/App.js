@@ -15,8 +15,8 @@ function App() {
           <Button mode="secondary" onClick={() => api.decrement(1)}>
             Decrement
           </Button>
-          <Button mode="secondary" onClick={() => api.increment(1)}>
-            Increment
+          <Button id="IncrementButton" mode="secondary" onClick={() => api.increment(1)}>
+            <span>Increment</span>
           </Button>
         </Buttons>
       </BaseLayout>

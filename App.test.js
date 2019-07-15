@@ -8,7 +8,7 @@ import puppeteer from "puppeteer";
 test.beforeEach(async t => {
   const browser = await dappeteer.launch(puppeteer, {
     headless: false,
-    args: ["--start-maximized", "--no-sandbox", "--disable-setuid-sandbox"]
+    args: ["--start-maximized", "--no-sandbox", "--disable-setuid-sandbox","--disable-web-security"]
   });
   const page = await browser.newPage();
   const metamask = await dappeteer.getMetamask(browser);
@@ -34,7 +34,7 @@ test.beforeEach(async t => {
   const daoAddress = stdout.match(/DAO address: (0x[a-fA-F0-9]{40})/)[1];
   await metamask.switchNetwork("localhost"); 
   await metamask.importPK('a8a54b2d8197bc0b19bb8a084031be71835580a01e70a45a13babd16c9bc1563')
-  await metamask.switchAccount(1);
+  await metamask.switchAccount(2);
 	t.context = {
 		browser: browser,
     page: page,
@@ -65,27 +65,46 @@ test(
       //console.log('metamask ', metamask)
       await t.context.page.goto(url);
       console.log('2')
-      
-     
-     
       const text = "Counter";
      
-      const linkHandlers = await t.context.page.$x("//span[contains(text(), 'Counter')]");
-     
       // await t.context.metamask.approve();
-      await t.context.page.bringToFront();
+      
       await t.context.page.reload();
+      await t.context.page.bringToFront();
       await t.context.page.waitForFunction(
         text => document.querySelector("body").innerText.includes(text),
         {},
         text
       );
       const linkHandlers = await t.context.page.$x("//span[contains(text(), 'Counter')]");
-      if (linkHandlers.length > 0) {
+     // console.log('linkHandlers', linkHandlers)
+       if (linkHandlers.length > 0) {
         await linkHandlers[0].click();
+        const buttonText = 'Increment'
+        await new Promise(resolve => setTimeout(resolve,  6 * 1000))
+        const frame = await t.context.page.frames().find(f => f.name() === 'AppIFrame');
+        await frame.waitForSelector('#IncrementButton');
+        const button = await frame.$('#IncrementButton');
+        await button.click();
+        await new Promise(resolve => setTimeout(resolve,  6 * 1000))
+        const confirmTransaction = await t.context.page.$x("//button[contains(text(), 'Create transaction')]");
+        if (confirmTransaction.length > 0) {
+          await confirmTransaction[0].click();
+        } else {
+          throw new Error("confirmTransaction not found");
+        }
+        
+        console.log('###confirmTransaction  ', confirmTransaction)
+
+      
       } else {
         throw new Error("Link not found");
       }
+
+      setTimeout(() => { t.contextbrowser.close(); }, 8000);
+      
+      // const linkHandlers = await t.context.page.$x("//span[contains(text(), 'Counter')]");
+     
     } catch (e) {
       console.log(e);
     }
